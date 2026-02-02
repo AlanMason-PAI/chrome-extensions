@@ -14,28 +14,29 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     const urlToAnalyze = info.linkUrl || tab.url;
 
     // Copy URL to clipboard and open Gemini
-    analyzeWithGemini(urlToAnalyze, tab.id);
+    analyzeWithGemini(urlToAnalyze, tab);
   }
 });
 
 // Handle toolbar icon click (analyze current page)
 chrome.action.onClicked.addListener((tab) => {
-  analyzeWithGemini(tab.url, tab.id);
+  analyzeWithGemini(tab.url, tab);
 });
 
-async function analyzeWithGemini(url, tabId) {
+async function analyzeWithGemini(url, currentTab) {
   // Copy URL to clipboard using a content script
   try {
     await chrome.scripting.executeScript({
-      target: { tabId: tabId },
+      target: { tabId: currentTab.id },
       func: copyToClipboard,
       args: [url]
     });
 
-    // Open Gemini in a new tab
+    // Open Gemini in a new tab (to the right of current tab)
     chrome.tabs.create({
       url: 'https://gemini.google.com/app',
-      active: true
+      active: true,
+      index: currentTab.index + 1
     });
 
   } catch (error) {
@@ -43,7 +44,8 @@ async function analyzeWithGemini(url, tabId) {
     // Still open Gemini even if copy fails
     chrome.tabs.create({
       url: 'https://gemini.google.com/app',
-      active: true
+      active: true,
+      index: currentTab.index + 1
     });
   }
 }
